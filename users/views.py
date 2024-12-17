@@ -1,31 +1,68 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import Users
-
+from django.db.utils import IntegrityError
+import json
+from .models import User
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.hashers import make_password
 # Create your views here.
 
-@api_view(['GET'])
-def signin(requests):
-    return HttpResponse("hello world!")
+@api_view(['POST'])
+def signin(request):
+    
+        json_data = list(request.data.keys())[0]  
+        data = json.loads(json_data)  
+        
+        email = data.get('email', '')
+        password = data.get('password', '')
+        print(email,password)
+        if not email or not password:
+            return JsonResponse({"error": "Email and password are required."}, status=400)
+        
+        try:
+            user = authenticate(request, email=email, password=password)
+            print(user)
+            if user:
+                login(request, user)
+                return JsonResponse({'message': 'Logged in successfully'}, status=200)
+            else:
+                return JsonResponse({"error": "Invalid email or password."}, status=401)
+        except Exception as e:
+            return JsonResponse({"error": "An unexpected error occurred during authentication."}, status=500)
 
-@api_view(['GET'])
-def signup(requests):
-    fullname = requests.data['fullName']
-    company_name = requests.data['companyName']
-    type = requests.data['type']
-    email = requests.data['email']
-    password = requests.data['password']
-    first_name = fullname.split(' ')[0]
-    last_name = fullname.split(' ')[1]
-    if type == 'candidate':
-        is_recruiter = False
-        is_candidate = True
-    if type == 'recruiter':
-        is_recruiter = True
-        is_candidate = False
-    users = Users(first_name=first_name, last_name=last_name, company_name=company_name, email=email, is_recruiter=is_recruiter, is_candidate=is_candidate)
-    users.set_password(password)
-    users.save()
-    return HttpResponse("welcome "+fullname)
+@api_view(['POST'])
+def signup(request):
+    try:
+        json_data = list(request.data.keys())[0]  
+        data = json.loads(json_data)  
+        fullname = data.get('fullName', '')
+        company_name = data.get('companyName', '')
+        role = data.get('role', '')
+
+        if not role:
+            return JsonResponse({"error": "Role must be set and cannot be empty."}, status=400)
+        
+        email = data.get('email', '')
+        password = data.get('password', '')
+
+        if not email or not password:
+            return JsonResponse({"error": "Email and password are required."}, status=400)
+        
+        
+        first_name, last_name = fullname.split(' ', 1) if fullname else ('', '')
+
+        if User.objects.filter(email=email).exists():
+                return JsonResponse({'error': 'User with this email already exists'}, status=400)
+
+        
+        user = User.objects.create(
+            first_name=first_name, 
+            last_name=last_name, 
+            company_name=company_name, 
+            email=email, 
+            role=role.lower(),
+            password=make_password(password)
+        )
+        return JsonResponse({'message': 'User created successfully'}, status=201)
+    except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
