@@ -26,9 +26,11 @@ SECRET_KEY = 'django-insecure-l05g&d&yd@y165*q$!!#=-rjeu)ioc+e6tn2)9ks%*(mhjii(1
 DEBUG = True
 
 
-ALLOWED_HOSTS = [".vercel.app","127.0.0.1"]
+ALLOWED_HOSTS = [".vercel.app","127.0.0.1",'skilled-legal-macaw.ngrok-free.app']
 
 CORS_ALLOW_CREDENTIALS = True
+
+
 
 CORS_ALLOWED_ORIGINS = [
 
@@ -38,10 +40,18 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
 
     "http://localhost:5173",
-    "http://127.0.0.1:8000"
+    "http://127.0.0.1:8000",
+    'https://skilled-legal-macaw.ngrok-free.app', 
 ]
 
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
+CSRF_COOKIE_HTTPONLY = False 
+
+CORS_EXPOSE_HEADERS = ['X-CSRFToken']
 
 CORS_ALLOW_HEADERS = [
     'content-type', 'authorization', 'x-csrftoken', 'accept', 'origin'
@@ -73,6 +83,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
