@@ -10,9 +10,9 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError("The Email field is required")
         email = self.normalize_email(email)
-        extra_fields.setdefault('is_active', True)  # Default active user
-        extra_fields.setdefault('is_staff', False)  # Regular user not staff
-        extra_fields.setdefault('is_superuser', False)  # Regular user not superuser
+        extra_fields.setdefault('is_active', True) 
+        extra_fields.setdefault('is_staff', False)  
+        extra_fields.setdefault('is_superuser', False)  
 
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -47,3 +47,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    email = models.EmailField()
+    skills = models.JSONField(default=list)
+    bio = models.TextField()
+    profile_image = models.ImageField(upload_to='profile_images/', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
