@@ -113,29 +113,65 @@ def set_profile(request):
         return JsonResponse({'error': 'Authentication required'}, status=401)
     
     try:
-
+        role = request.data.get('role', '').lower()
         fullname = request.data.get('fullName', '')
-        title = request.data.get('title', '')
         country = request.data.get('country', '')
-        hourly_rate = request.data.get('hourlyRate', '')
         bio = request.data.get('bio', None)
-        skills = request.data.get('skills', []) 
-        profile_image = request.data.get('profileImage', None) 
+        profile_image = request.data.get('profileImage', None)
 
-        if not fullname or not title or not country or not hourly_rate:
-            return JsonResponse({"error": "Full name, title, country, and hourly rate are required."}, status=400)
+        if not fullname or not country:
+            return JsonResponse({"error": "Full name and country are required."}, status=400)
 
-        profile = Profile.objects.create(
-            user=request.user,
-            full_name=fullname,
-            email=request.user.email,
-            title=title,
-            country=country,
-            hourly_rate=hourly_rate,
-            bio=bio,
-            skills=skills,
-            profile_image=profile_image
-            )
+        profile_data = {
+            'user': request.user,
+            'full_name': fullname,
+            'email': request.user.email,
+            'country': country,
+            'bio': bio,
+            'profile_image': profile_image
+        }
+
+        if role == 'candidate':
+            title = request.data.get('title', '')
+            hourly_rate = request.data.get('hourlyRate', '')
+            skills = request.data.get('skills', [])
+
+            if not title or not hourly_rate:
+                return JsonResponse({"error": "Title and hourly rate are required for candidates."}, status=400)
+
+            profile_data.update({
+                'title': title,
+                'hourly_rate': hourly_rate,
+                'skills': skills
+            })
+
+        elif role == 'recruiter':
+            company_name = request.data.get('companyName', '')
+            company_size = request.data.get('companySize', '')
+            industry = request.data.get('industry', '')
+            company_website = request.data.get('companyWebsite', '')
+            linkedin = request.data.get('linkedin', '')
+            twitter = request.data.get('twitter', '')
+
+            if not company_name or not company_size or not industry:
+                return JsonResponse({"error": "Company name, size, and industry are required for recruiters."}, status=400)
+
+            profile_data.update({
+                'company_name': company_name,
+                'company_size': company_size,
+                'industry': industry,
+                'company_website': company_website,
+                'linkedin': linkedin,
+                'twitter': twitter,
+                'title': 'Recruiter',
+                'skills': []  
+            })
+
+        else:
+            return JsonResponse({"error": "Invalid role specified."}, status=400)
+        
+        profile = Profile.objects.create(**profile_data)
+        
         return JsonResponse({'message': 'Profile created successfully'}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -143,11 +179,14 @@ def set_profile(request):
 @api_view(['GET'])
 def get_profile(request):
     if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Authentication required', 'redirect': '/signin'}, status=401)
+        return JsonResponse({'error': 'Authentication required'}, status=401)
     
     try:
         profile = Profile.objects.get(user=request.user)
         serializer = ProfileSerializer(profile)
         return JsonResponse({'profile': serializer.data}, status=200)
     except Profile.DoesNotExist:
-        return JsonResponse({'error': 'Profile not found', 'redirect': '/signin'}, status=404)
+        role = request.user.role
+        full_name = request.user.first_name + ' ' + request.user.last_name
+
+        return JsonResponse({'error': 'Profile not found', 'user':{'full_name': full_name, 'role': role}}, status=404)
