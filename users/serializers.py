@@ -16,7 +16,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'country',
             'email',
             'bio',
-            'profile_image',
+            'profile_image_url',
             'created_at',
             'updated_at'
         ]

@@ -8,8 +8,29 @@ from django.contrib.auth.hashers import make_password
 from .serializers import ProfileSerializer
 # Create your views here.
 from django.middleware.csrf import get_token
-
+from io import BytesIO
 from django.views.decorators.csrf import csrf_exempt
+
+from supabase import create_client
+from django.conf import settings
+
+supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+
+
+
+
+def upload_to_supabase(file, filename):
+    bucket_name = settings.SUPABASE_BUCKET
+    try:
+        file_data = file.read()
+        response = supabase.storage.from_(bucket_name).upload(filename, file_data)
+        print("everything looks fine and the image is uploaded!!")
+        print(f"this is the url {settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}",)
+        return f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}"
+    except:
+        response = "Supabase"
+        raise Exception(f"Failed to upload file: {getattr(response, 'error', {}).get('message', 'Unknown error')}")
+
 
 
 @api_view(['POST'])
@@ -105,7 +126,6 @@ def logout_view(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
-    
 @api_view(['POST'])
 def set_profile(request):
     if not request.user.is_authenticated:
@@ -117,19 +137,30 @@ def set_profile(request):
         fullname = request.data.get('fullName', '')
         country = request.data.get('country', '')
         bio = request.data.get('bio', None)
-        profile_image = request.data.get('profileImage', None)
+        profile_image = request.FILES.get('profileImage', None)
+
+        print(profile_image)
 
         if not fullname or not country:
             return JsonResponse({"error": "Full name and country are required."}, status=400)
 
         profile_data = {
             'user': request.user,
+            'role': role,
             'full_name': fullname,
             'email': request.user.email,
             'country': country,
             'bio': bio,
-            'profile_image': profile_image
         }
+
+        if profile_image:
+            try:
+                filename = f"profile_pictures/{request.user.user_id}_{profile_image.name}"  # Use username instead of id
+                profile_image_url = upload_to_supabase(profile_image, filename)
+                print("this is the image url:",profile_image_url)
+                profile_data['profile_image_url'] = profile_image_url
+            except Exception as e:
+                return JsonResponse({'error': f"Image upload failed: {str(e)}"}, status=500)
 
         if role == 'candidate':
             title = request.data.get('title', '')
@@ -169,12 +200,14 @@ def set_profile(request):
 
         else:
             return JsonResponse({"error": "Invalid role specified."}, status=400)
+        print("this is the profile data",profile_data)
         
         profile = Profile.objects.create(**profile_data)
         
-        return JsonResponse({'message': 'Profile created successfully'}, status=200)
+        return JsonResponse({'message': 'Profile created successfully', 'profile_image_url': profile_data.get('profile_image')}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 @api_view(['GET'])
 def get_profile(request):

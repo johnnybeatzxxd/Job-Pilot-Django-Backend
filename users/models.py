@@ -58,7 +58,7 @@ class Profile(models.Model):
     email = models.EmailField()
     skills = models.JSONField(default=list,blank=True)
     bio = models.TextField()
-    profile_image = models.ImageField(upload_to='profile_images/', blank=True)
+    profile_image_url = models.URLField(blank=True)
     company_name = models.CharField(max_length=100, blank=True)
     company_size = models.CharField(max_length=50, blank=True)
     industry = models.CharField(max_length=100, blank=True)

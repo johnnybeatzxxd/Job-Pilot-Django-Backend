@@ -122,6 +122,12 @@ DATABASES = {
     }
 }
 
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_API_KEY')
+SUPABASE_BUCKET = os.getenv('SUPABASE_BUCKET_NAME')
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
