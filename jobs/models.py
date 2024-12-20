@@ -7,6 +7,7 @@ class Job(models.Model):
     job_id = models.CharField(max_length=8, default=uuid.uuid4().hex[:8], editable=False, unique=True)
     company = models.ForeignKey(Profile, on_delete=models.CASCADE)
     job_title = models.CharField(max_length=100)
+    country = models.CharField(max_length=100,blank=True)
     salary_type = models.CharField(choices=[('fixed', 'Fixed'), ('hourly', 'Hourly')])
     job_type = models.CharField(choices=[('remote', 'Remote'), ('on-site', 'On-site'), ('hybrid', 'Hybrid')])
     level = models.CharField(choices=[('entry', 'Entry'), ('intermediate', 'Intermediate'), ('senior', 'Senior'), ('lead', 'Lead'), ('expert', 'Expert')])
