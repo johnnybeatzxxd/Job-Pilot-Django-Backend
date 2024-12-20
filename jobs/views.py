@@ -26,6 +26,7 @@ def post_job(request):
     try:
         company_id = request.data.get('companyId')
         job_title = request.data.get('jobTitle') 
+        country = request.data.get('country')
         salary_type = request.data.get('salaryType')
         job_type = request.data.get('jobType')  
         level = request.data.get('professionLevel')
@@ -45,6 +46,7 @@ def post_job(request):
         Job.objects.create(
             company=company,
             job_title=job_title,
+            country=country,
             salary_type=salary_type.lower(),
             job_type=job_type.lower(),
             level=level.lower(),
