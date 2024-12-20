@@ -24,8 +24,6 @@ def upload_to_supabase(file, filename):
     try:
         file_data = file.read()
         response = supabase.storage.from_(bucket_name).upload(filename, file_data)
-        print("everything looks fine and the image is uploaded!!")
-        print(f"this is the url {settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}",)
         return f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}"
     except:
         response = "Supabase"
@@ -129,7 +127,6 @@ def logout_view(request):
 @api_view(['POST'])
 def set_profile(request):
     if not request.user.is_authenticated:
-        print("User is not authenticated:", request.user)
         return JsonResponse({'error': 'Authentication required'}, status=401)
     
     try:
@@ -139,7 +136,6 @@ def set_profile(request):
         bio = request.data.get('bio', None)
         profile_image = request.FILES.get('profileImage', None)
 
-        print(profile_image)
 
         if not fullname or not country:
             return JsonResponse({"error": "Full name and country are required."}, status=400)
