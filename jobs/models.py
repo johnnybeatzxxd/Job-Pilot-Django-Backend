@@ -3,8 +3,11 @@ from users.models import *
 import uuid
 # Create your models here.
 
+def generate_job_id():
+    return uuid.uuid4().hex[:8]
+
 class Job(models.Model):
-    job_id = models.CharField(max_length=8, default=uuid.uuid4().hex[:8], editable=False, unique=True)
+    job_id = models.CharField(max_length=8, default=generate_job_id, editable=False, unique=True)
     company = models.ForeignKey(Profile, on_delete=models.CASCADE)
     job_title = models.CharField(max_length=100)
     country = models.CharField(max_length=100,blank=True)
