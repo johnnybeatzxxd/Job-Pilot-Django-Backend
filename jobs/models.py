@@ -21,3 +21,6 @@ class Job(models.Model):
     requirements = models.JSONField(default=list)
     desirable_skills = models.JSONField(default=list,null=True)
     tags = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    

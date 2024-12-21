@@ -35,7 +35,7 @@ def post_job(request):
         estimated_budget = request.data.get('estimatedBudget') 
         description = request.data.get('jobDescription')  
         requirements = request.data.get('requirements')
-        desirable_skills = request.data.get('desirableSkills') 
+        desirable_skills = request.data.get('desirables') 
         tags = request.data.get('tags')  
         
         print(company_id)

@@ -66,5 +66,5 @@ class Profile(models.Model):
     linkedin = models.URLField(blank=True)
     twitter = models.URLField(blank=True)
     github = models.URLField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=models.functions.Now())
     updated_at = models.DateTimeField(auto_now=True)
