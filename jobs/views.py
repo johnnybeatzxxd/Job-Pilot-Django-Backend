@@ -4,13 +4,8 @@ from django.db.utils import IntegrityError
 import json
 from users.models import User, Profile
 from jobs.models import Job
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.hashers import make_password
 #from .serializers import ProfileSerializer
-from django.middleware.csrf import get_token
-from io import BytesIO
-from django.views.decorators.csrf import csrf_exempt
-
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
@@ -86,7 +81,7 @@ def get_job(request):
 
     
         if country_code and country_code != 'ALL':
-            jobs = jobs.filter(country__iexact=country_code)
+            jobs = jobs.filter(country__icontains=country_code)
 
        
         price_range = filters.get('priceRange', {})
@@ -116,7 +111,7 @@ def get_job(request):
         jobs_list = []
         for job in jobs:
             jobs_list.append({
-                'id': job.id,
+                'id': job.job_id,
                 'jobTitle': job.job_title,
                 'country': job.country,
                 'salaryType': job.salary_type,
@@ -129,10 +124,12 @@ def get_job(request):
                 'requirements': job.requirements,
                 'desirableSkills': job.desirable_skills,
                 'tags': job.tags,
+                'created_at':job.created_at,
                 'company': {
                     'id': job.company.id,
                     'email': job.company.email,
-                    'name': job.company.name
+                    'name': job.company.company_name,
+                    'profile_image':job.company.profile_image_url
                 }
             })
 
@@ -143,3 +140,22 @@ def get_job(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@api_view(['POST'])
+def save_job(request):
+    user = request.user
+    job_id = request.data.get("jobId")
+    profile = Profile.objects.get(email=user.email)
+    favorite_jobs = profile.favorite_jobs
+
+    if job_id in favorite_jobs:
+        favorite_jobs.remove(job_id)
+        message = 'Job removed from favorites successfully'
+    else:
+        favorite_jobs.append(job_id)
+        message = 'Job saved to favorites successfully'
+
+    profile.favorite_jobs = favorite_jobs
+    profile.save()
+    return JsonResponse({'message': message}, status=200)

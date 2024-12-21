@@ -17,6 +17,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'email',
             'bio',
             'profile_image_url',
+            'favorite_jobs',
             'created_at',
             'updated_at'
         ]
