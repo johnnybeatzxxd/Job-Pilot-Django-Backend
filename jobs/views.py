@@ -62,4 +62,84 @@ def post_job(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+def get_job(request):
+    try:
+        data = request.data
+        query = data.get('query', '').strip()
+        filters = data.get('filters', {})
+        country_code = data.get('countryCode')
+
+        jobs = Job.objects.all()
+
+        if query:
+            jobs = jobs.filter(job_title__icontains=query)
+
+        if filters.get('experienceLevel'):
+            jobs = jobs.filter(level__iexact=filters['experienceLevel'].lower())
+
+        if filters.get('jobType'):
+            job_types = filters['jobType']
+            if job_types:
+                jobs = jobs.filter(job_type__in=[jt.lower() for jt in job_types])
+
     
+        if country_code and country_code != 'ALL':
+            jobs = jobs.filter(country__iexact=country_code)
+
+       
+        price_range = filters.get('priceRange', {})
+        
+       
+        hourly = price_range.get('hourly', {})
+        if hourly.get('min') and hourly.get('max'):
+            jobs = jobs.filter(
+                salary_type='hourly',
+                salary__gte=float(hourly['min']),
+                salary__lte=float(hourly['max'])
+            )
+        
+        fixed = price_range.get('fixed', {})
+        if fixed.get('min') and fixed.get('max'):
+            jobs = jobs.filter(
+                salary_type='fixed',
+                estimated_budget__gte=float(fixed['min']),
+                estimated_budget__lte=float(fixed['max'])
+            )
+
+        if filters.get('skills'):
+            for skill in filters['skills']:
+                jobs = jobs.filter(tags__icontains=skill)
+
+       
+        jobs_list = []
+        for job in jobs:
+            jobs_list.append({
+                'id': job.id,
+                'jobTitle': job.job_title,
+                'country': job.country,
+                'salaryType': job.salary_type,
+                'jobType': job.job_type,
+                'level': job.level,
+                'maxApplicants': job.maximum_applications,
+                'salary': job.salary,
+                'estimatedBudget': job.estimated_budget,
+                'description': job.description,
+                'requirements': job.requirements,
+                'desirableSkills': job.desirable_skills,
+                'tags': job.tags,
+                'company': {
+                    'id': job.company.id,
+                    'email': job.company.email,
+                    'name': job.company.name
+                }
+            })
+
+        return JsonResponse({
+            'jobs': jobs_list,
+            'count': len(jobs_list)
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
