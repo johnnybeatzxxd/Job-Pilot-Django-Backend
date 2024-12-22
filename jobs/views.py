@@ -4,7 +4,6 @@ from django.db.utils import IntegrityError
 import json
 from users.models import User, Profile
 from jobs.models import Job
-#from .serializers import ProfileSerializer
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from .serializers import JobSerializer
@@ -84,16 +83,15 @@ def search_job(request):
             if isinstance(job_types, str):
                 job_types = [job_types]
             
-            # First check if it's a salary type
+       
             salary_types = ['fixed', 'hourly']
             job_location_types = ['remote', 'on-site', 'hybrid']
             
-            # Filter by salary type if present
+
             salary_type_filters = [jt.lower() for jt in job_types if jt.lower() in salary_types]
             if salary_type_filters:
                 jobs = jobs.filter(salary_type__in=salary_type_filters)
-            
-            # Filter by job location type if present
+
             job_location_filters = [jt.lower() for jt in job_types if jt.lower() in job_location_types]
             if job_location_filters:
                 jobs = jobs.filter(job_type__in=job_location_filters)
@@ -103,7 +101,6 @@ def search_job(request):
 
         price_range = filters.get('priceRange', {})
         
-        # Handle fixed salary range with case insensitive salary_type
         fixed = price_range.get('fixed', {})
         if fixed.get('min') or fixed.get('max'):
             budget_filter = Q(salary_type='fixed')
@@ -113,7 +110,7 @@ def search_job(request):
                 budget_filter &= Q(estimated_budget__lte=float(fixed['max']))
             jobs = jobs.filter(budget_filter)
 
-        # Handle hourly salary range with case insensitive salary_type
+      
         hourly = price_range.get('hourly', {})
         if hourly.get('min') or hourly.get('max'):
             salary_filter = Q(salary_type='hourly')

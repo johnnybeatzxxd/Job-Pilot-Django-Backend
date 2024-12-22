@@ -7,5 +7,7 @@ urlpatterns = [
     path('search', search_job),
     path('save', save_job),
     path('get', get_job),
+    path('applications/', include('applications.urls'))
+    
 
 ]
