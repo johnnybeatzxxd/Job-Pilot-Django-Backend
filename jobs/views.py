@@ -7,6 +7,7 @@ from jobs.models import Job
 #from .serializers import ProfileSerializer
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from .serializers import JobSerializer
 
 # Create your views here.
 
@@ -181,9 +182,12 @@ def save_job(request):
 
 @api_view(['POST'])
 def get_job(request):
-    job_id = request.data.get("jobId")
     try:
+        job_id = request.data.get("jobId")
         job = Job.objects.get(job_id=job_id)
-        return JsonResponse({'job':job})
-    except:
-        return JsonResponse({"error":"Job Not Found!"})
+        serializer = JobSerializer(job)
+        return JsonResponse({'job': serializer.data}, status=200)
+    except Job.DoesNotExist:
+        return JsonResponse({"error": "Job Not Found!"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
