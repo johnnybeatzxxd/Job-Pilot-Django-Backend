@@ -6,6 +6,7 @@ from users.models import User, Profile
 from jobs.models import Job
 #from .serializers import ProfileSerializer
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 # Create your views here.
 
@@ -69,43 +70,61 @@ def get_job(request):
         jobs = Job.objects.all()
 
         if query:
-            jobs = jobs.filter(job_title__icontains=query)
+            jobs = jobs.filter(
+                Q(job_title__icontains=query) |
+                Q(tags__icontains=query)
+            )
 
         if filters.get('experienceLevel'):
-            jobs = jobs.filter(level__iexact=filters['experienceLevel'].lower())
+            jobs = jobs.filter(level=filters['experienceLevel'].lower())
 
         if filters.get('jobType'):
             job_types = filters['jobType']
-            if job_types:
-                jobs = jobs.filter(job_type__in=[jt.lower() for jt in job_types])
+            if isinstance(job_types, str):
+                job_types = [job_types]
+            
+            # First check if it's a salary type
+            salary_types = ['fixed', 'hourly']
+            job_location_types = ['remote', 'on-site', 'hybrid']
+            
+            # Filter by salary type if present
+            salary_type_filters = [jt.lower() for jt in job_types if jt.lower() in salary_types]
+            if salary_type_filters:
+                jobs = jobs.filter(salary_type__in=salary_type_filters)
+            
+            # Filter by job location type if present
+            job_location_filters = [jt.lower() for jt in job_types if jt.lower() in job_location_types]
+            if job_location_filters:
+                jobs = jobs.filter(job_type__in=job_location_filters)
 
-    
         if country_code and country_code != 'ALL':
             jobs = jobs.filter(country__icontains=country_code)
 
-       
         price_range = filters.get('priceRange', {})
         
-       
-        hourly = price_range.get('hourly', {})
-        if hourly.get('min') and hourly.get('max'):
-            jobs = jobs.filter(
-                salary_type='hourly',
-                salary__gte=float(hourly['min']),
-                salary__lte=float(hourly['max'])
-            )
-        
+        # Handle fixed salary range with case insensitive salary_type
         fixed = price_range.get('fixed', {})
-        if fixed.get('min') and fixed.get('max'):
-            jobs = jobs.filter(
-                salary_type='fixed',
-                estimated_budget__gte=float(fixed['min']),
-                estimated_budget__lte=float(fixed['max'])
-            )
+        if fixed.get('min') or fixed.get('max'):
+            budget_filter = Q(salary_type='fixed')
+            if fixed.get('min'):
+                budget_filter &= Q(estimated_budget__gte=float(fixed['min']))
+            if fixed.get('max'):
+                budget_filter &= Q(estimated_budget__lte=float(fixed['max']))
+            jobs = jobs.filter(budget_filter)
+
+        # Handle hourly salary range with case insensitive salary_type
+        hourly = price_range.get('hourly', {})
+        if hourly.get('min') or hourly.get('max'):
+            salary_filter = Q(salary_type='hourly')
+            if hourly.get('min'):
+                salary_filter &= Q(salary__gte=float(hourly['min']))
+            if hourly.get('max'):
+                salary_filter &= Q(salary__lte=float(hourly['max']))
+            jobs = jobs.filter(salary_filter)
 
         if filters.get('skills'):
             for skill in filters['skills']:
-                jobs = jobs.filter(tags__icontains=skill)
+                jobs = jobs.filter(tags__icontains=f'"{skill}"')
 
        
         jobs_list = []
