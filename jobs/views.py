@@ -60,7 +60,7 @@ def post_job(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
-def get_job(request):
+def search_job(request):
     try:
         data = request.data
         query = data.get('query', '').strip()
@@ -178,3 +178,12 @@ def save_job(request):
     profile.favorite_jobs = favorite_jobs
     profile.save()
     return JsonResponse({'message': message}, status=200)
+
+@api_view(['POST'])
+def get_job(request):
+    job_id = request.data.get("jobId")
+    try:
+        job = Job.objects.get(job_id=job_id)
+        return JsonResponse({'job':job})
+    except:
+        return JsonResponse({"error":"Job Not Found!"})
