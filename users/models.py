@@ -67,5 +67,6 @@ class Profile(models.Model):
     twitter = models.URLField(blank=True)
     github = models.URLField(blank=True)
     favorite_jobs = models.JSONField(default=list, blank=True)
+    applied_jobs = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(default=models.functions.Now())
     updated_at = models.DateTimeField(auto_now=True)
