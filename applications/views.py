@@ -23,7 +23,6 @@ def submit(request):
     country = applied_user.country
     job_title = job.job_title
     job_salary = job.salary
-
     try:
         application = Application.objects.create(
             job=job,

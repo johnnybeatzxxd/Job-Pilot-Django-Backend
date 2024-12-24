@@ -39,7 +39,7 @@ def get_overview(request):
             "alert": 0,
             "recently_applied": recently_applied
         }
-        return JsonResponse({"message":overview})
+        return JsonResponse({"success": True,"message":overview})
         
     except Profile.DoesNotExist:
         return JsonResponse({"error": "User profile not found"}, status=404)
@@ -49,9 +49,65 @@ def get_overview(request):
 @login_required
 @api_view(['GET'])
 def get_applied_jobs(request):
-    pass
+    try:
+        user = request.user
+        user_profile = Profile.objects.get(email=user.email)
+        applications = Application.objects.filter(applied_user=user_profile)
+        
+    
+        applications_data = []
+        for application in applications:
+            applications_data.append({
+                'job_id': application.job.job_id,
+                'job_title': application.job.job_title,
+                'company_name': application.job.company.company_name,
+                'country': application.job.country,
+                'salary': application.job.salary,
+                'job_type': application.job.job_type,
+                'application':application.application,
+                'applied_date': application.created_at.isoformat(),
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "message": applications_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": str(e)
+        })
 
 @login_required
 @api_view(['GET'])
 def get_favorite_jobs(request):
-    pass
+    try:
+        user = request.user
+        user_profile = Profile.objects.get(email=user.email)
+        favorite_jobs_ids = user_profile.favorite_jobs
+
+        favorite_jobs = []
+        # Fetch all jobs with job_id in favorite_jobs_ids
+        jobs = Job.objects.select_related('company').filter(job_id__in=favorite_jobs_ids)
+        
+        for job in jobs:
+            favorite_jobs.append({
+                'job_id': job.job_id,
+                'job_title': job.job_title,
+                'company_name': job.company.company_name,
+                'country': job.country,
+                'salary': job.salary,
+                'job_type': job.job_type,
+                'posted_date':job.created_at,
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "message": favorite_jobs
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": str(e)
+        })
+    
