@@ -187,3 +187,104 @@ def get_recruiter_applications(request):
             "success": False,
             "message": str(e)
         }, status=500)
+
+@login_required
+@api_view(['GET'])
+def get_recruiter_jobs(request):
+    try:
+        user = request.user
+        if user.role != 'recruiter':
+            return JsonResponse({
+                "success": False,
+                "message": "Only recruiters can access this endpoint"
+            }, status=403)
+
+        recruiter_profile = Profile.objects.get(email=user.email)
+        
+        jobs = Job.objects.select_related('company').filter(company=recruiter_profile)
+        
+        jobs_data = []
+        for job in jobs:
+            jobs_data.append({
+                'job_id': job.job_id,
+                'job_title': job.job_title,
+                'company_name': job.company.title,
+                'company_image_url':job.company.profile_image_url,
+                'country': job.country,
+                'salary': job.salary,
+                'salary_type': job.salary_type,
+                'job_type': job.job_type,
+                'level': job.level,
+                'maximum_applications': job.maximum_applications,
+                'estimated_budget': job.estimated_budget,
+                'requirements': job.requirements,
+                'desirable_skills': job.desirable_skills,
+                'tags': job.tags,
+                'posted_date': job.created_at.isoformat(),
+                'applications_count': Application.objects.filter(job=job).count()
+            })
+
+        return JsonResponse({
+            "success": True,
+            "message": jobs_data
+        })
+    
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "Recruiter profile not found"
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": str(e)
+        }, status=500)
+    
+@login_required
+@api_view(['GET'])
+def get_recruiter_applications(request):
+    try:
+        user = request.user
+        if user.role != 'recruiter':
+            return JsonResponse({
+                "success": False,
+                "message": "Only recruiters can access this endpoint"
+            }, status=403)
+
+        recruiter_profile = Profile.objects.get(email=user.email)
+        
+        applications = Application.objects.select_related(
+            'job', 'applied_user', 'company'
+        ).filter(company=recruiter_profile)
+
+        applications_data = []
+        for application in applications:
+            applications_data.append({
+                'application_id': application.app_id,
+                'job_id': application.job.job_id,
+                'job_title': application.job_title,
+                'candidate_name': application.applied_user.full_name,
+                'candidate_email': application.applied_user.email,
+                'candidate_country': application.applied_user.country,
+                'application_text': application.application,
+                'resume_url': application.resume,
+                'applied_date': application.created_at.isoformat(),
+                'candidate_profile_image': application.applied_user.profile_image_url,
+                'candidate_title': application.applied_user.title,
+            })
+
+        return JsonResponse({
+            "success": True,
+            "message": applications_data
+        })
+    
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "Recruiter profile not found"
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": str(e)
+        }, status=500)
