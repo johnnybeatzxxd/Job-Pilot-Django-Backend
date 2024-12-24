@@ -7,5 +7,6 @@ urlpatterns = [
     path('signup', signup),
     path('set_profile', set_profile),
     path('get_profile', get_profile),
+    path('dashboard/', include('dashboard.urls')),
     path('logout', logout_view),
 ]
